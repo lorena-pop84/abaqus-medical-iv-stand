@@ -129,3 +129,10 @@ Applying 15 N to a single hook introduces an un-counterbalanced moment arm relat
 1. **Dominance of Eccentricity:** Off-center payload placement is the primary driver of structural deformation and stress in IV stand structures. Concentrating 15 N on one hook produces **42× higher deflection** than spreading 20 N across four hooks.
 2. **Stress Margin:** Maximum stress under asymmetric loading (9.12 MPa) remains well below the yield limit of AlSi alloy, confirming high structural safety under normal handling.
 3. **Modeling Best Practice:** Using node-based continuum couplings on circular profiles successfully prevented artificial stress spikes, enabling accurate evaluation of bending moment transfer across the assembly.
+
+---
+
+## Selected Results
+### FEA Model
+
+![FEA Model](images/fea-model.jpeg)
