@@ -93,5 +93,5 @@ Loads act vertically downward (the +Z axis of the model points down). Both are s
 
 ## Files
 
-- `models/Symmetric-4-hook-load.inp`: input file for load case 1
-- `models/Asymmetric-1-hook-load.inp`: input file for load case 2
+- [models/Symmetric-4-hook-load.inp](models/Symmetric-4-hook-load.inp): input file for load case 1
+- [models/Asymmetric-1-hook-load.inp](models/Asymmetric-1-hook-load.inp): input file for load case 2
