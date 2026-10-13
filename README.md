@@ -1,138 +1,97 @@
 # abaqus-medical-iv-stand
 Finite element analysis of a medical IV stand under symmetric and asymmetric hook loading using Abaqus/CAE.
-# Medical IV Stand — FEA Comparative Study
+# Medical IV Stand: FEA of Symmetric vs. Single-Hook Loading
 
-## Overview
-This project presents a structural finite element analysis (FEA) evaluating the mechanical response of a medical IV stand assembly under symmetric and asymmetric (eccentric) payload distributions.
+Linear static finite element analysis of a wheeled medical IV stand in Abaqus/CAE. The same stand is loaded in two ways: **20 N spread evenly over four hooks**, and **15 N hanging on a single hook**. The goal is to see how much the position of the load matters compared to its size.
 
-The CAD model was created in PTC Creo Parametric by a colleague and imported into **Abaqus/CAE**, where I developed the structural assembly setup, defined node-based continuum distributing couplings, and performed a comparative investigation between two operational load cases: a **20 N symmetric load** across four hooks and a **15 N asymmetric load** on a single hook.
+![FEA model](images/fea-model.png)
 
----
+## Results at a glance
 
-## Key Engineering Highlights
-* **Eccentric Bending Sensitivity:** Demonstrated that load position is far more critical than total weight—a 15 N single-hook load induces a **2.6× increase in peak von Mises stress** and a **42× increase in total deflection** compared to a balanced 20 N load.
-* **Boundary Node Coupling Strategy:** Overcame surface-based coupling limitations on complex hook geometries by implementing a Continuum Distributing Coupling over selected circular boundary nodes, preventing artificial stress singularities at load entry points.
-* **Lightweight Aluminum Alloy:** Assigned isotropic linear elastic AlSi properties (E = 70,000 MPa, Poisson ratio = 0.33), confirming that stresses remain well within the elastic regime for both configurations.
-* **Comparative Load Scenarios:** Evaluated bending moment propagation from the upper hook assembly down through the central telescopic pole into the base connection.
+| | Symmetric (4 hooks x 5 N) | Single hook (1 hook x 15 N) | Ratio |
+| :--- | ---: | ---: | ---: |
+| Total load | 20 N | 15 N | 0.75x |
+| Max von Mises stress | 3.577 MPa | 9.121 MPa | about 2.55x |
+| Max displacement | 0.019 mm | 0.801 mm | about 42x |
 
----
+Even though the single-hook case carries 25% less total load, the stand deflects about 42 times more, and the peak stress is about 2.5 times higher. In both cases the peak stress is at the root of a hook, where the hook enters the pole.
 
-## Objective
-The primary goals of this numerical study were:
-* Compare structural performance between balanced (4-hook) and eccentric (1-hook) loading.
-* Evaluate maximum von Mises stress locations and magnitude variations across both load cases.
-* Quantify peak pole deflection and overall assembly compliance under eccentric bending moments.
-* Validate load distribution and transmission through assembly tie interfaces.
+## About the model
 
----
+- **Geometry:** the stand was designed in PTC Creo Parametric by a colleague and imported into Abaqus/CAE. I did not model the geometry.
+- **My part:** I rebuilt the whole Abaqus model from the imported geometry: material, mesh, connections between parts, supports, loads, both load cases and the post-processing.
+- **Tool:** Abaqus/CAE (Standard solver).
+- **Units:** mm, N, MPa.
 
-## My Contribution
-Starting from the imported CAD assembly, I developed the complete numerical workflow in Abaqus/CAE, including:
-* **Assembly & Material Assignment:** Configured part instances and assigned AlSi material section properties.
-* **Node-Based Coupling Formulation:** Selected circular profile boundary nodes to set up continuum distributing couplings for hook load distribution.
-* **Boundary Conditions & Ties:** Implemented ENCASTRE fixed constraints at the base and Tie constraints at component assembly interfaces.
-* **Multi-Case Step Setup:** Configured parallel static general steps for symmetric and single-hook load cases.
-* **Post-Processing & Comparative Analysis:** Analyzed stress concentration shifts and displacement magnification ratios.
+## Model setup
 
----
-
-## Software and Tools
-* **Abaqus/CAE** (FEA assembly setup, solver & post-processing)
-* **PTC Creo Parametric** (Original CAD modeling)
-
----
-
-## Model Setup & Coupling Idealization
-Due to geometric surface topology constraints on the upper hooks, surface-based couplings could not be directly assigned. To ensure physically accurate force distribution without localized mesh distortion:
-* I defined Reference Points at each hook application center.
-* A **Continuum Distributing Coupling** was established by manually selecting the ring of circular boundary nodes at the start and end profiles of each hook.
-
-![Hook coupling](images/hook-coupling.jpeg)
-
----
-
-## Material Properties
-All components were assigned an isotropic linear elastic material model representing an **Aluminum-Silicon (AlSi)** casting alloy.
+### Material
+All parts use one isotropic, linear elastic aluminium-silicon (AlSi) alloy.
 
 | Property | Value |
 | :--- | ---: |
-| Material | AlSi Alloy |
 | Young's modulus (E) | 70,000 MPa |
 | Poisson's ratio | 0.33 |
 
----
+### Mesh
+3D quadratic tetrahedral elements (C3D10). Results come from a single mesh; no mesh convergence study was done.
 
-## FEA Setup & Load Cases
+![Pole and hook mesh](images/pole-hook-mesh.png)
+![Leg and wheel mesh](images/leg-wheel-mesh.png)
 
-### Boundary Conditions & Assembly Interfaces
-* **Fixed Base:** An **ENCASTRE** boundary condition (restraining all 6 DOFs) was applied to the lower support region of the stand.
-* **Assembly Interactions:** Rigid connections between the central pole, hook hub, and base structure were modeled using **Tie constraints**.
+### Connections between parts
+Nine named **Tie** constraints join the separate parts of the assembly, so they behave as one connected structure.
 
-![Fixed support](images/fixed-support.jpeg)
+### Supports
+The four wheels are fixed in all directions (ENCASTRE: no translation, no rotation). This means the stand cannot roll or tip in the model, and the pole bends relative to the wheels.
 
----
+![Fixed wheels](images/wheels-fixed.png)
 
-### Load Case Definitions
-Two distinct operational configurations were evaluated in `Static, General` steps:
+### How the hooks are loaded
+A force applied to a single node would create an artificial stress spike. Instead, each loaded hook has a reference point connected to a ring of nodes on the circular cross-section of the hook through a **continuum distributing coupling** (uniform weighting). The force goes into the reference point and is spread over the whole ring of nodes.
 
-1. **Load Case 1 — Symmetric Loading (20 N Total):**
-   * A vertical load of **5 N** applied to each of the four hooks via dedicated Reference Points.
-2. **Load Case 2 — Single-Hook Loading (15 N Total):**
-   * A vertical load of **15 N** applied to a single hook, creating an eccentric, asymmetric loading condition.
+![Hook coupling](images/hook-coupling.png)
 
-![Symmetric loading](images/symmetric-loading.jpeg)
-![Single hook loading](images/single-hook-loading.jpeg)
+### Load cases
+Loads act vertically downward (the +Z axis of the model points down). Both are single static steps.
 
----
+1. **Symmetric:** 5 N on each of the four hooks, 20 N in total.
+2. **Single hook:** 15 N on one hook, 15 N in total.
 
-## Mesh Verification
-The assembly was pre-discretized using 3D tetrahedral elements. I conducted a pre-analysis mesh check which identified minor aspect ratio warnings in non-critical caster/base geometry regions. Because these localized warnings were located far from the main load path (upper hooks and central pole) and the analysis converged smoothly, the mesh was validated for production runs.
+![Symmetric loading](images/symmetric-loading.png)
+![Single-hook loading](images/single-hook-loading.png)
 
-![Mesh](images/mesh.jpeg)
+## Results
 
----
+### Load case 1: symmetric (4 x 5 N)
+- Max von Mises stress: **3.577 MPa**, at the roots of the hooks.
+- Max displacement: **0.019 mm**, at the tips of the hooks (the hooks themselves flex slightly).
 
-## Results & Comparative Discussion
+![Case 1: von Mises stress](images/case1-stress.png)
+![Case 1: displacement](images/case1-displacement.png)
 
-### Load Case 1 vs. Load Case 2 Comparison
+### Load case 2: single hook (1 x 15 N)
+- Max von Mises stress: **9.121 MPa**, at the root of the loaded hook, where it enters the pole.
+- Max displacement: **0.801 mm**, at the top of the pole. The whole stand leans sideways.
 
-| Parameter | Load Case 1 (Symmetric) | Load Case 2 (Single-Hook) | Relative Impact |
-| :--- | ---: | ---: | :--- |
-| **Load Configuration** | **5 N × 4 hooks** | **15 N × 1 hook** | Asymmetric shift |
-| **Total Applied Load** | **20 N** | **15 N** | **25% lower total force** |
-| **Max von Mises Stress** | **3.57 MPa** | **9.12 MPa** | **2.55× Stress Increase** |
-| **Max Total Displacement** | **0.019 mm** | **0.798 mm** | **42.0× Deflection Increase** |
+![Case 2: von Mises stress](images/case2-stress.png)
+![Case 2: displacement](images/case2-displacement.png)
 
----
+## Discussion
 
-### Load Case 1 — Symmetric Loading (20 N)
-Under symmetric loading, forces cancel out across the central axis, resulting in negligible pole bending and uniform stress distribution.
-* **Max von Mises Stress:** ~3.57 MPa (located near the hook attachment hub).
-* **Max Displacement:** ~0.019 mm (virtually rigid structural response).
+- **Symmetric loading:** the four hooks are arranged in opposite pairs, so their moments cancel out on the pole. The pole is mostly pressed along its axis and hardly bends. The only visible movement is the hooks flexing.
+- **Single-hook loading:** nothing balances the load, so it bends the pole sideways. The displacement grows along the pole and is largest at the top, which is why the deflection ratio (about 42x) is much bigger than the stress ratio (about 2.5x).
+- **Stress at the hook root:** the loaded hook carries 3 times the force of one hook in the symmetric case (15 N vs 5 N), and the peak stress rises by about 2.5 times. This is consistent with the peak stress being driven mainly by how much that one hook is bent.
+- **Margin:** the stresses (a few MPa) are small compared with typical yield strengths of aluminium alloys, so the stand stays elastic in both cases. I did not look up a yield value for this specific alloy.
 
-![Case 1 — von Mises stress](images/case1-stress.jpeg)
-![Case 1 — total displacement](images/case1-displacement.jpeg)
+## Limitations
 
----
+- The material is linear elastic, so the model cannot show yielding or any other non-elastic behaviour.
+- Results are from one mesh, with no convergence study.
+- The results were not compared with physical measurements.
+- The loads are small, fixed values (5 N and 15 N). They are for comparing the two load cases, not a certified design load.
 
-### Load Case 2 — Single-Hook Loading (15 N)
-Applying 15 N to a single hook introduces an un-counterbalanced moment arm relative to the pole's neutral axis.
-* **Max von Mises Stress:** ~9.12 MPa (concentrated at the loaded hook root and pole-to-base joint).
-* **Max Displacement:** ~0.798 mm (pronounced lateral bending along the upper pole).
+## Files
 
-![Case 2 — von Mises stress](images/case2-stress.jpeg)
-![Case 2 — total displacement](images/case2-displacement.jpeg)
-
----
-
-## Conclusions
-1. **Dominance of Eccentricity:** Off-center payload placement is the primary driver of structural deformation and stress in IV stand structures. Concentrating 15 N on one hook produces **42× higher deflection** than spreading 20 N across four hooks.
-2. **Stress Margin:** Maximum stress under asymmetric loading (9.12 MPa) remains well below the yield limit of AlSi alloy, confirming high structural safety under normal handling.
-3. **Modeling Best Practice:** Using node-based continuum couplings on circular profiles successfully prevented artificial stress spikes, enabling accurate evaluation of bending moment transfer across the assembly.
-
----
-
-## Selected Results
-### FEA Model
-
-![FEA Model](images/fea-model.jpeg)
+- `models/Symmetric-4-hook-load.inp`: input file for load case 1
+- `models/Asymmetric-1-hook-load.inp`: input file for load case 2
