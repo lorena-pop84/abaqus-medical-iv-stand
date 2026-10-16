@@ -1,5 +1,3 @@
-# abaqus-medical-iv-stand
-Finite element analysis of a medical IV stand under symmetric and asymmetric hook loading using Abaqus/CAE.
 # Medical IV Stand: FEA of Symmetric vs. Single-Hook Loading
 
 Linear static finite element analysis of a wheeled medical IV stand in Abaqus/CAE. The same stand is loaded in two ways: **20 N spread evenly over four hooks**, and **15 N hanging on a single hook**. The goal is to see how much the position of the load matters compared to its size.
